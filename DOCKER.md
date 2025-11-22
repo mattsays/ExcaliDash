@@ -37,7 +37,7 @@ docker compose up -d --build
 
 ### Access the application:
 
-Open your browser to `http://localhost:6767`
+[http://localhost:6767](http://localhost:6767)
 
 ## Publishing to Docker Hub
 
@@ -51,80 +51,6 @@ The `publish-docker.sh` script builds images for multiple platforms (amd64, arm6
 
 # Build and push with a specific version
 ./publish-docker.sh v1.0.0
-```
-
-**Prerequisites:**
-
-- Docker Buildx enabled
-- Logged in to Docker Hub: `docker login`
-
-**Platforms supported:**
-
-- `linux/amd64` (Intel/AMD x86_64)
-- `linux/arm64` (Apple Silicon, ARM servers)
-
-The script will:
-
-1. Create a buildx builder if needed
-2. Build both frontend and backend images for all platforms
-3. Push to `zimengxiong/excalidash-backend` and `zimengxiong/excalidash-frontend`
-4. Tag with both the specified version and `latest`
-
-## Management Commands
-
-### View logs:
-
-```bash
-# All services
-docker compose logs -f
-
-# Specific service
-docker compose logs -f backend
-docker compose logs -f frontend
-```
-
-### Stop services:
-
-```bash
-docker compose down
-```
-
-### Stop and remove volumes (clean slate):
-
-```bash
-docker compose down -v
-```
-
-### Restart services:
-
-```bash
-docker compose restart
-```
-
-### Check service status:
-
-```bash
-docker compose ps
-```
-
-## Development
-
-For local development outside Docker, use the existing npm scripts:
-
-**Backend:**
-
-```bash
-cd backend
-npm install
-npm run dev
-```
-
-**Frontend:**
-
-```bash
-cd frontend
-npm install
-npm run dev
 ```
 
 ## Database
@@ -149,45 +75,6 @@ NODE_ENV=production
 ```
 VITE_API_URL=/api
 ```
-
-## Troubleshooting
-
-### Check health status:
-
-```bash
-docker-compose ps
-```
-
-Both services should show "healthy" status.
-
-### Reset database:
-
-```bash
-docker-compose down -v
-docker-compose up -d
-```
-
-### View detailed backend logs:
-
-```bash
-docker-compose logs backend
-```
-
-### Rebuild specific service:
-
-```bash
-docker-compose up -d --build backend
-```
-
-## Production Deployment
-
-For production deployment:
-
-1. Use proper environment variables
-2. Configure proper CORS settings in the backend
-3. Add HTTPS/TLS termination (e.g., via reverse proxy like Traefik or nginx)
-4. Consider using PostgreSQL instead of SQLite for better concurrency
-5. Set up proper backup strategy for the `backend-data` volume
 
 ## Port Mapping
 

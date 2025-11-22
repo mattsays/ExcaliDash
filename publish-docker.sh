@@ -62,16 +62,9 @@ docker buildx build \
 
 echo -e "${GREEN}✓ Frontend image pushed successfully${NC}"
 
-# Summary
+
 echo ""
 echo -e "${GREEN}===========================================${NC}"
 echo -e "${GREEN}✓ All images published successfully!${NC}"
 echo -e "${GREEN}===========================================${NC}"
-echo ""
-echo -e "Published images:"
-echo -e "  Backend:  ${YELLOW}$DOCKER_USERNAME/$IMAGE_NAME-backend:$VERSION${NC}"
-echo -e "  Frontend: ${YELLOW}$DOCKER_USERNAME/$IMAGE_NAME-frontend:$VERSION${NC}"
-echo ""
-echo -e "To use these images:"
-echo -e "  ${YELLOW}docker compose -f docker-compose.prod.yml up -d${NC}"
 echo ""

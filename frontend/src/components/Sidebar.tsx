@@ -1,10 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LayoutGrid, Folder, Plus, Trash2, Edit2, Archive, FolderOpen, Settings as SettingsIcon } from 'lucide-react';
 import type { Collection } from '../types';
 import clsx from 'clsx';
 import { ConfirmModal } from './ConfirmModal';
+import { Logo } from './Logo';
 
 interface SidebarProps {
   collections: Collection[];
@@ -169,9 +169,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="w-[260px] flex flex-col h-full bg-transparent">
         <div className="p-5 pb-2">
           <h1 className="text-2xl text-slate-900 dark:text-white flex items-center gap-3 tracking-tight" style={{ fontFamily: 'Excalifont' }}>
-            <div className="w-8 h-8 bg-indigo-600 dark:bg-neutral-800 rounded-lg flex items-center justify-center text-white border-2 border-black dark:border-neutral-700 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.2)]">
-              <LayoutGrid size={18} strokeWidth={2.5} />
-            </div>
+            <Logo className="w-10 h-10" />
             <span className="mt-1">ExcaliDash</span>
           </h1>
         </div>
