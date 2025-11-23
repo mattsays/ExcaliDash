@@ -6,9 +6,9 @@ import fs from "fs";
 import { promises as fsPromises } from "fs";
 import { createServer } from "http";
 import { Server } from "socket.io";
+import { Worker } from "worker_threads";
 import multer from "multer";
 import archiver from "archiver";
-import Database from "better-sqlite3";
 import { z } from "zod";
 // @ts-ignore
 import { PrismaClient } from "./generated/client";
@@ -287,41 +287,46 @@ const validateSqliteHeader = (filePath: string): boolean => {
     return false;
   }
 };
-
-const runIntegrityCheck = (filePath: string): boolean => {
-  // First validate the file header to prevent RCE attacks
+// Non-blocking CPU check using worker threads while still verifying headers
+const verifyDatabaseIntegrityAsync = (filePath: string): Promise<boolean> => {
   if (!validateSqliteHeader(filePath)) {
-    return false;
+    return Promise.resolve(false);
   }
 
-  let dbInstance: Database.Database | undefined;
-  try {
-    // Use readonly mode and file locking to be more conservative with system resources
-    dbInstance = new Database(filePath, {
-      readonly: true,
-      fileMustExist: true,
-      timeout: 5000, // 5 second timeout for integrity check
+  return new Promise((resolve) => {
+    const worker = new Worker(
+      path.resolve(__dirname, "./workers/db-verify.js"),
+      {
+        workerData: { filePath },
+      }
+    );
+    let timeoutHandle: NodeJS.Timeout;
+    let settled = false;
+
+    const finish = (result: boolean) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeoutHandle);
+      resolve(result);
+    };
+
+    worker.on("message", (isValid: boolean) => finish(isValid));
+    worker.on("error", (err) => {
+      console.error("Worker error:", err);
+      finish(false);
+    });
+    worker.on("exit", (code) => {
+      if (code !== 0) {
+        finish(false);
+      }
     });
 
-    // Run integrity check with timeout
-    const result = dbInstance.prepare("PRAGMA integrity_check;").get();
-    return result?.integrity_check === "ok";
-  } catch (error) {
-    console.error("Integrity check failed:", error);
-    return false;
-  } finally {
-    // Always close database connection to free resources
-    if (dbInstance) {
-      try {
-        dbInstance.close();
-      } catch (closeError) {
-        console.warn(
-          "Failed to close database after integrity check:",
-          closeError
-        );
-      }
-    }
-  }
+    timeoutHandle = setTimeout(() => {
+      console.warn("Integrity check worker timed out", { filePath });
+      worker.terminate();
+      finish(false);
+    }, 10000); // 10 second timeout
+  });
 };
 
 const removeFileIfExists = async (filePath?: string) => {
@@ -843,7 +848,7 @@ app.post("/import/sqlite/verify", upload.single("db"), async (req, res) => {
     }
 
     const stagedPath = req.file.path;
-    const isValid = runIntegrityCheck(stagedPath);
+    const isValid = await verifyDatabaseIntegrityAsync(stagedPath);
     await removeFileIfExists(stagedPath);
 
     if (!isValid) {
@@ -883,7 +888,7 @@ app.post("/import/sqlite", upload.single("db"), async (req, res) => {
       return res.status(500).json({ error: "Failed to stage uploaded file" });
     }
 
-    const isValid = runIntegrityCheck(stagedPath);
+    const isValid = await verifyDatabaseIntegrityAsync(stagedPath);
     if (!isValid) {
       await removeFileIfExists(stagedPath);
       return res
